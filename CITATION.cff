@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite it as below, together with the UPAR dataset and challenge papers listed in the README."
+title: "UPAR 2027 Challenge, Track 1: fine-tuned foundation-model ensembles for generalizable pedestrian attribute recognition"
+type: software
+authors:
+  - family-names: "Trần"
+    given-names: "Trọng Nhân"
+    email: "24521243@gm.uit.edu.vn"
+    affiliation: "University of Information Technology, Vietnam National University, Ho Chi Minh City"
+  - family-names: "Nguyễn"
+    given-names: "Chơn Nhân"
+    email: "24521233@gm.uit.edu.vn"
+    affiliation: "University of Information Technology, Vietnam National University, Ho Chi Minh City"
+  - family-names: "Nguyễn"
+    given-names: "Thị Ái Trâm"
+    email: "24521805@gm.uit.edu.vn"
+    affiliation: "University of Information Technology, Vietnam National University, Ho Chi Minh City"
+license: MIT
+date-released: "2026-10-24"
+keywords:
+  - pedestrian attribute recognition
+  - domain generalization
+  - UPAR
+  - vision transformer

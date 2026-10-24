@@ -1,0 +1,14 @@
+# Inference (scoring server: torch 2.4.1, no network)
+torch==2.4.1
+torchvision==0.19.1
+numpy
+Pillow
+
+# Training, CMASK and packaging (run on the Kaggle and Colab GPU images, October 2026)
+timm>=1.0.20
+transformers
+huggingface_hub
+safetensors
+pandas
+gdown==5.2.0
+jupyter
