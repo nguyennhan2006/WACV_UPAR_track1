@@ -101,15 +101,20 @@ Thresholds: per attribute, coordinate descent over 0.05–0.95 in steps of 0.025
 
 ## 6. Trained weights
 
+All files are in one Google Drive folder, [UPAR2027_track1_weights](https://drive.google.com/drive/folders/1mEwm1fsJFmdYctWsvFXMlNL6LqswwdCU). It also holds a `README.txt`, the `meta.json` of each checkpoint (next to its `best_ema.pt`), and copies of the backbone licenses in `licenses/`. Read the license terms (Section 10) before using the weights.
+
 | File | md5 | Link |
 |---|---|---|
-| X2F-CMASK package (zip, 2.64 GB) | `e9bb5cdf6d567767d8d0a47791b4d299` | TODO |
-| C4 package (zip, 1.15 GB) | `b45d3f00362f15a1b99f060296a0aaef` | TODO |
-| F8c `best_ema.pt` | `6960557c3b5b09972ba4aa38493866d6` | TODO |
-| L2c `best_ema.pt` | `5f20fe0e2f4dd7ddb4ce952186e47d91` | TODO |
-| G `best_ema.pt` | `d3d0513a27101f0337698c8f3d184fd6` | TODO |
-| R `best_ema.pt` | `945dfe3617d88a066df72c04fb49fc60` | TODO |
-| F1, L2 seed 42, L2 seed 2 `best_ema.pt` | TODO | TODO |
+| X2F-CMASK package (zip, 2.64 GB) | `e9bb5cdf6d567767d8d0a47791b4d299` | [Drive](https://drive.google.com/file/d/1YrnN5wIJYCr0r_SD9Fqmz6uxAB5pv39H/view?usp=sharing) |
+| C4 package (zip, 1.15 GB) | `b45d3f00362f15a1b99f060296a0aaef` | [Drive](https://drive.google.com/file/d/19uzMts7ws6smvgca-BxKuI2zEzebwMF5/view?usp=sharing) |
+| F8c `best_ema.pt` | `6960557c3b5b09972ba4aa38493866d6` | [Drive](https://drive.google.com/file/d/1IbyMJ8PRAQ1XQ6wzGcGGtEbFAFwnf27R/view?usp=sharing) |
+| L2c `best_ema.pt` | `5f20fe0e2f4dd7ddb4ce952186e47d91` | [Drive](https://drive.google.com/file/d/1uiew9qCJftHgeXfKg4h7rwYcSy7-WlTZ/view?usp=sharing) |
+| G `best_ema.pt` | `d3d0513a27101f0337698c8f3d184fd6` | [Drive](https://drive.google.com/file/d/1268TURkk_PN2QTJot-XSF24bCn9AZLbu/view?usp=sharing) |
+| R `best_ema.pt` | `945dfe3617d88a066df72c04fb49fc60` | [Drive](https://drive.google.com/file/d/12o43do3Fk0moAnWJJzDH0xrSjx0caskN/view?usp=sharing) |
+
+From the command line: `pip install gdown==5.2.0`, then `gdown --folder 1mEwm1fsJFmdYctWsvFXMlNL6LqswwdCU` for the whole folder, or `gdown <file id>` for one file (the id is the part after `/d/` in the link). Check the md5 after downloading.
+
+F1 and L2-soup (uniform weight average of L2 seeds 42 and 2) are released only inside the C4 package, as `assets/weights_0.pt` (F1, w = 0.6) and `assets/weights_1.pt` (L2-soup, w = 0.4), in the int8 form that was submitted. Their full-precision checkpoints are not released.
 
 Each `best_ema.pt` is the `state_dict` of `PARNet` in `inference/*/model.py`:
 
