@@ -54,6 +54,7 @@ No external images or labels are used.
 notebooks/upar_e2e_08017.ipynb   self-contained pipeline: challenge data -> X2F-CMASK zip
 inference/x2f_cmask/             run.py, model.py, metadata.yaml, assets/config.json of the submitted zip
 inference/c4/                    same for C4
+inference/predict.py             runs a package on a list of images: predictions, labels, challenge metric (Section 9)
 training/x2f_cmask/              the scripts/notebooks that produced the X2F-CMASK checkpoints
 training/c4/                     the scripts/notebooks that produced the C4 checkpoints
 packaging/                       int8 packing, threshold calibration and zip assembly used for both entries
@@ -70,7 +71,8 @@ requirements.txt, Dockerfile
 
 - Scoring server: one NVIDIA A10 (24 GB), torch 2.4.1, no network, 5 minutes per run.
 - Training: Kaggle 2×T4 (16 GB each) for L2, L2c, G, R and the CMASK out-of-fold models; one A100 40 GB (Colab) for F1 and F8c. Freezing only 8 blocks of ViT-H+/16 does not fit on a T4.
-- `pip install -r requirements.txt`, or `docker build -t upar-t1 .` (CUDA 12.1, torch 2.4.1).
+- Code: `git clone https://github.com/nguyennhan2006/WACV_UPAR_track1`; weights: Section 6.
+- `pip install -r requirements.txt`, or `docker build -t upar-t1 .` (CUDA 12.1, torch 2.4.1). The image runs `inference/predict.py` (Section 9); for training, start it with `--entrypoint bash`.
 
 ## 4. Data
 
@@ -147,6 +149,14 @@ It takes about 30 GPU-hours, so it runs as several Kaggle sessions selected by t
 - A training run that exceeds `UPAR_TIME_LIMIT_H` (default 11 h) saves `resume.pt` and continues in the next session.
 - The DINOv3 ViT-L/16 download needs a Hugging Face token (`HF_TOKEN`, or the Kaggle secret named in the notebook). The token is never printed or written.
 - **Packing only.** Put the four released checkpoints in folders `e2e_f8c`, `e2e_l2c`, `e2e_g11`, `e2e_radio` (each with `best_ema.pt` and `meta.json`), mount them as input and run `UPAR_STAGES=pack`.
+- **Outside Kaggle (Docker).** Put the challenge data and the outputs of earlier sessions in one folder, laid out as the Kaggle inputs of that session, then
+  ```bash
+  docker run --rm -it --gpus all --ipc=host --entrypoint bash -v /path/to/inputs:/inputs upar-t1
+  # inside the container:
+  UPAR_INPUT_ROOT=/inputs UPAR_STAGES=oof0,oof1,flags \
+    jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=-1 notebooks/upar_e2e_08017.ipynb
+  ```
+  Outside Kaggle the outputs go to `notebooks/work/`; mount a host folder there (`-v "$PWD/work:/workspace/upar-t1/notebooks/work"`) to keep them.
 - GPU training is not bit-exact, so retrained weights, CMASK flags and thresholds differ slightly; the deterministic parts (split, `run.py`, `model.py`, `metadata.yaml`, config structure) are checked by md5/CRC. The notebook has passed static checks (compile, pyflakes, CRC); a full end-to-end run has not been done. The submitted checkpoints were produced by the original code in `training/x2f_cmask/`.
 
 ## 8. Reproducing C4
@@ -164,16 +174,47 @@ X2F-CMASK was assembled the same way: `pack_hplus.py` for the F8c + L2c pair, th
 
 ## 9. Inference
 
-The scoring program imports `run.py` from the package root and calls `predict_batch(samples)` (or `predict_image(sample)`), where each sample is a dict with the image path under `image`. `run.py` returns 40 scores per image, and the platform thresholds them at 0.5. To run a package locally, unzip it and call the same functions:
+### Reproducing the leaderboard predictions
 
-```python
-import sys; sys.path.insert(0, "SUBMIT_dir")
-import run
-run.load_model()
-preds = run.predict_batch([{"image": "path/to/crop.jpg", "index": 0}])
+`inference/predict.py` runs a submitted package on a list of images with the package's own `run.py`, through the same calls as the Codabench scoring program. With Docker (needs the NVIDIA Container Toolkit; the leaderboard runs used one A10 with 24 GB):
+
+```bash
+git clone https://github.com/nguyennhan2006/WACV_UPAR_track1
+cd WACV_UPAR_track1
+docker build -t upar-t1 .
+docker run --rm --gpus all \
+  -v /path/to/test/images:/data:ro \
+  -v "$PWD/packages:/workspace/upar-t1/packages" \
+  -v "$PWD/out:/out" \
+  upar-t1 --package x2f_cmask --images /data --out /out/predictions.csv
 ```
 
-`run.py` counts images in the order they arrive, so the head/tail routing of X2F-CMASK only matches the challenge when the full test list is fed in its original order.
+Without Docker: `pip install -r requirements.txt`, then `python inference/predict.py` with the same arguments.
+
+- `--package x2f_cmask` (the final entry) or `--package c4` downloads the submitted zip once from Google Drive into `packages/`, checks its md5 and unpacks it. A zip downloaded by hand (Section 6) or an unpacked package folder can be given instead.
+- `--images` is a folder of images, or a CSV whose first column is the image path relative to `--root` (for example `MEVID/images/0.jpg`; a header such as `# image,Age-Young,...` is optional). If the CSV also has the 40 label columns, the script prints the challenge metric: for each top-level folder (domain) the harmonic mean of mA and instance F1, then the mean over domains.
+- Outputs: `predictions.csv` (40 probabilities per image; the calibrated thresholds are folded in, so 0.5 is the decision threshold), `predictions_labels.csv` (0/1) and, when labels are given, `predictions_scores.json`.
+- `--limit 256` runs only the first 256 images, as a quick check.
+
+Two settings make the result independent of the machine:
+
+- **Routing.** X2F-CMASK sends MEVID images to the F8c + L2c pair and synthetic images to the four-model tail. On Codabench the test stream was MEVID (positions 0–28,094) followed by Synth (28,095–29,247), and `run.py` split it by position. `predict.py` feeds the images under a top-level folder named `Synth*` last and puts the split there, so the routing is the same for any list order. `--split-at N` routes by position instead.
+- **Time guard.** To stay under the 5-minute limit, `run.py` lowers the input resolution or drops the tail models when it projects that a run will be too slow. `predict.py` switches this off by default (`--time-guard on` keeps it), so every image runs as on the A10: X2F-CMASK runs MEVID at 224×112 and Synth at 192×96 (196×98 for DINOv2) with all four models and horizontal-flip averaging; C4 runs both models on every image at 224×112. Do not use `UPAR_GUARD_OFF=1` for this: it also removes the fixed lower-resolution tier of the tail.
+
+GPU kernels are not bit-exact across hardware, so a few scores very close to 0.5 may flip.
+
+### Python API
+
+The scoring program imports `run.py` from the package root, calls `load_model()` once, then `predict_batch(samples)` (or `predict_image(sample)`). Each sample is a dict with the image file under `image_path`; on Codabench it also carried `image` (the relative path), `index` (the position in the stream) and `attribute_names` (the order of the 40 outputs). `run.py` returns 40 scores per image, and the platform thresholds them at 0.5.
+
+```python
+import sys; sys.path.insert(0, "packages/x2f_cmask")   # the folder that contains run.py
+import run
+run.load_model()
+probs = run.predict_batch([{"image_path": "/data/MEVID/images/0.jpg", "image": "MEVID/images/0.jpg", "index": 0}])
+```
+
+Called this way, `run.py` counts images in the order they arrive, so the X2F-CMASK routing matches the challenge only when the MEVID images come first (or `UPAR_SPLIT_AT` is set to their count).
 
 ## 10. License and citation
 

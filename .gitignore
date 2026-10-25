@@ -4,4 +4,6 @@
 *.npy
 *.safetensors
 __pycache__/
+packages/
+out/
 .ipynb_checkpoints/
