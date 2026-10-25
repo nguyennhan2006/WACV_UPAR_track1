@@ -203,6 +203,14 @@ Two settings make the result independent of the machine:
 
 GPU kernels are not bit-exact across hardware, so a few scores very close to 0.5 may flip.
 
+**Check on Kaggle (25 October 2026).** We ran `predict.py` without Docker on a Kaggle machine with two Tesla T4 (16 GB each, only one used), Python 3.13 and torch 2.11 (the Docker image has torch 2.4.1):
+
+- `--package x2f_cmask` and `--package c4` both downloaded from Google Drive, passed the md5 check and unpacked.
+- X2F-CMASK on our 19,780 validation images (Section 4) scored 0.91054, the value we recorded for this package (Market-1501 0.8956, PA-100K 0.9239, PETA 0.9121). To exercise the tail, 1,500 of these images were also listed under a folder named `SynthVal/`; the tail scored 0.9139 on them.
+- Against an earlier run of the same package that called `run.py` directly, 49 of the 791,200 labels from the pair and 4 of the 60,000 labels from the tail flipped; scores changed by 0.0001 on average.
+- C4 on 3,000 of the validation images (1,000 per dataset) scored 0.91135 (X2F-CMASK on the same images: 0.91133).
+- Peak GPU memory was 12,857 MiB for X2F-CMASK and 6,909 MiB for C4, so one 16 GB GPU is enough. On one T4, X2F-CMASK took 45 ms per image in the pair (25 ms of it loading the image) and about 65 ms in the tail; C4 took 22.6 ms per image.
+
 ### Python API
 
 The scoring program imports `run.py` from the package root, calls `load_model()` once, then `predict_batch(samples)` (or `predict_image(sample)`). Each sample is a dict with the image file under `image_path`; on Codabench it also carried `image` (the relative path), `index` (the position in the stream) and `attribute_names` (the order of the 40 outputs). `run.py` returns 40 scores per image, and the platform thresholds them at 0.5.
