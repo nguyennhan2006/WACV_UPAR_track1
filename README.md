@@ -14,11 +14,11 @@ X2F-CMASK ranked 2nd of 89 entries on the final Track 1 leaderboard (Codabench u
 Team: Trần Trọng Nhân (leader), Nguyễn Chơn Nhân, Nguyễn Thị Ái Trâm, University of Information Technology, Vietnam National University, Ho Chi Minh City, Vietnam. Contact: 24521243@gm.uit.edu.vn.
 
 > **Disclosure.** C4 uses only our validation set for every choice. X2F-CMASK does not:
-> 1. it routes images by their position in the test list (positions 0–28,094 are MEVID, 28,095–29,247 are Synth);
-> 2. its tail recipe (members, weights, flip TTA) was chosen by comparing leaderboard scores;
-> 3. it uses CMASK, which failed our pre-registered validation gate, and was kept after its test score was seen.
+> 1. it routes images by their position in the test list (positions 0–28,094 are MEVID, 28,095–29,247 are Synth), a boundary hard-coded from the known test order. In the scoring log (`logs/x2f_cmask_08017_scoring_log.txt`) the first 28,095 image paths lie in `MEVID/images/` and the remaining 1,153 in `Synth/images/`, so a rule reading the dataset folder of each path would give the same split on that run (an argument from the log, not a rescored submission);
+> 2. its larger Synth tail follows validation (in our study of 70 ensemble and resolution configurations, adding a member raised the score in 86% of 141 comparisons), but the tail's member weights, flip TTA and input resolution were chosen by comparing leaderboard scores;
+> 3. it uses CMASK, which did not pass the validation gate we set before training it (pair score −0.0010 against the original-label pair, CI95 [−0.0021, +0.0002]), and was kept after its test score was seen (0.8017, against 0.8012 for the same entry without the mask); we do not read this difference as evidence that CMASK helps.
 >
-> No test image or label was used for training or threshold calibration.
+> No test image or label was used for training or threshold calibration. We regard 0.7966 (C4) as the score of the method without test feedback and 0.8017 as our leaderboard result.
 
 ## 1. Systems
 
@@ -38,7 +38,7 @@ Epochs are counted from 0. "Val" is the validation score at threshold 0.5, avera
 - **C4:** 0.6·F1 + 0.4·L2-soup at 224×112 on every test image, one threshold set.
 - **X2F-CMASK:**
   - head (first 28,095 images): 0.6·F8c + 0.4·L2c at 224×112, thresholds `thresholds_solo`;
-  - tail (remaining 1,153 images): 0.24·F8c + 0.16·L2c + 0.3·G + 0.3·R at 192×96 (196×98 for DINOv2), logits averaged with the horizontal flip, thresholds `thresholds` calibrated on the four-member validation logits.
+  - tail (remaining 1,153 images): 0.24·F8c + 0.16·L2c + 0.3·G + 0.3·R at 192×96 (196×98 for DINOv2), logits averaged with the horizontal flip, thresholds `thresholds` calibrated on the four-member validation logits (computed at 224×112 without flip, not on the flipped 192×96 input).
 
 **Pretrained weights**
 - DINOv3 ViT-H+/16: `timm/vit_huge_plus_patch16_dinov3.lvd1689m` (Hugging Face, timm).
@@ -60,6 +60,7 @@ training/c4/                     the scripts/notebooks that produced the C4 chec
 packaging/                       int8 packing, threshold calibration and zip assembly used for both entries
 data/split_0710/                 our train/val re-split (image lists)
 data/cmask/                      CMASK flags (suspected noisy label cells) on our training set
+logs/                            Codabench scoring logs of X2F-CMASK (0.8017), C4 (0.7966) and the earlier v17 entry (0.7992)
 requirements.txt, Dockerfile
 ```
 
@@ -87,7 +88,7 @@ requirements.txt, Dockerfile
 | Item | Value |
 |---|---|
 | Optimiser | AdamW, backbone LR 3e-5 with layer-wise decay 0.85, head LR 1e-3, weight decay 0.05 |
-| Schedule | 8 epochs, 1 warm-up epoch, cosine |
+| Schedule | 8 epochs, 1 linear warm-up epoch, cosine |
 | Batch | 64, mixed precision, gradient clipping 5.0 |
 | Regularisation | drop path 0.15, head dropout 0.2, label smoothing 0.05, EMA 0.999 |
 | Loss | BCE weighted per attribute by its positive rate (DeepMAR), masked for unlabelled cells (and CMASK cells) |
@@ -174,7 +175,7 @@ X2F-CMASK was assembled the same way: `pack_hplus.py` for the F8c + L2c pair, th
 
 ## 9. Inference
 
-### Reproducing the leaderboard predictions
+### Running the submitted packages
 
 `inference/predict.py` runs a submitted package on a list of images with the package's own `run.py`, through the same calls as the Codabench scoring program. With Docker (needs the NVIDIA Container Toolkit; the leaderboard runs used one A10 with 24 GB):
 
@@ -199,11 +200,11 @@ Without Docker: `pip install -r requirements.txt`, then `python inference/predic
 Two settings make the result independent of the machine:
 
 - **Routing.** X2F-CMASK sends MEVID images to the F8c + L2c pair and synthetic images to the four-model tail. On Codabench the test stream was MEVID (positions 0–28,094) followed by Synth (28,095–29,247), and `run.py` split it by position. `predict.py` feeds the images under a top-level folder named `Synth*` last and puts the split there, so the routing is the same for any list order. `--split-at N` routes by position instead.
-- **Time guard.** To stay under the 5-minute limit, `run.py` lowers the input resolution or drops the tail models when it projects that a run will be too slow. `predict.py` switches this off by default (`--time-guard on` keeps it), so every image runs as on the A10: X2F-CMASK runs MEVID at 224×112 and Synth at 192×96 (196×98 for DINOv2) with all four models and horizontal-flip averaging; C4 runs both models on every image at 224×112. Do not use `UPAR_GUARD_OFF=1` for this: it also removes the fixed lower-resolution tier of the tail.
+- **Time guard.** To stay under the 5-minute limit, `run.py` lowers the input resolution or drops the tail models when it projects that a run will be too slow. `predict.py` switches this off by default (`--time-guard on` keeps it), so every image is processed with the designed configuration, whatever the speed of the GPU: X2F-CMASK runs MEVID at 224×112 and Synth at 192×96 (196×98 for DINOv2) with all four models and horizontal-flip averaging; C4 runs both models on every image at 224×112. On the A10 the guard did intervene in earlier v17 runs: in the scored v17 run (`logs/v17_07992_scoring_log.txt`) it turned RADIO off after 128 images and back on, at 192×96, for the last 2,944. In the leaderboard run of X2F-CMASK it did not intervene: the scoring log (`logs/x2f_cmask_08017_scoring_log.txt`) shows all 28,095 MEVID images at 224×112 and all 1,153 Synth images at 192×96 with all four models and horizontal-flip averaging, the last image finishing 266 s after the script started. The scored C4 run (`logs/c4_07966_scoring_log.txt`) needed no intervention either: all 29,248 images at 224×112, the last finishing 235 s after the start. Do not use `UPAR_GUARD_OFF=1` for this: it also removes the fixed lower-resolution tier of the tail.
 
 GPU kernels are not bit-exact across hardware, so a few scores very close to 0.5 may flip.
 
-**Check on Kaggle (25 October 2026).** We ran `predict.py` without Docker on a Kaggle machine with two Tesla T4 (16 GB each, only one used), Python 3.13 and torch 2.11 (the Docker image has torch 2.4.1):
+**Check on Kaggle (25 October 2026).** We ran `predict.py` without Docker on a Kaggle machine with two Tesla T4 (16 GB each, only one used), Python 3.13 and torch 2.11 (the Docker image has torch 2.4.1; we have not run the Docker image itself):
 
 - `--package x2f_cmask` and `--package c4` both downloaded from Google Drive, passed the md5 check and unpacked.
 - X2F-CMASK on our 19,780 validation images (Section 4) scored 0.91054, the value we recorded for this package (Market-1501 0.8956, PA-100K 0.9239, PETA 0.9121). To exercise the tail, 1,500 of these images were also listed under a folder named `SynthVal/`; the tail scored 0.9139 on them.

@@ -3,7 +3,8 @@
 
 The package's run.py is used unchanged, through the same calls as the Codabench scoring program
 (load_model, predict_batch). By default the time guard of run.py is switched off, so every image is
-processed as in the leaderboard run on the A10, whatever the speed of the GPU (Section 9 of README.md).
+processed with the designed configuration (no resolution drop, tail models kept), whatever the speed
+of the GPU (Section 9 of README.md).
 
   python inference/predict.py --package x2f_cmask --images /data/test/gt.csv --root /data/test \
       --out out/predictions.csv

@@ -1,0 +1,29 @@
+# Codabench scoring log of v17 (test 0.7992), an earlier submission listed in the fact sheet; its package is not part of this repository.
+# NVIDIA A10 server. Saved on 26 October 2026; Codabench is now offline. The [run.py] lines are verbatim.
+# Kept as an example of the time guard intervening. Reading notes:
+#   - Models: DINOv3-H+ (dinov3_vith16p) weight 0.49, DINOv2-L (dinov2_vitl14_reg) 0.21, RADIO (radio_v4h, optional) 0.30;
+#     no split by position, no flip.
+#   - After 128 images the guard projected 327 s with RADIO and 239 s without, against a 262 s budget, so it turned RADIO off.
+#     After 26,304 images it projected 262 s with RADIO and 253 s without, so it turned RADIO back on and lowered the input to 192x96.
+#   - So RADIO ran on 3,072 images (the first 128 and the last 2,944), and the last 2,944 images (1,791 MEVID + all 1,153 Synth) ran at 192x96.
+#   - Last line: all 29,248 images done 256 s after the script started, 8.7 ms per image on average.
+#   - The guard acts on measured time, so another run of the same package can switch at different points.
+[run.py] torch 2.4.1+cu121 | device cuda (NVIDIA A10) | cpu threads 20 | models dinov3_vith16p 224x112 w=0.49, dinov2_vitl14_reg 224x112 w=0.21, radio_v4h 224x112 w=0.30 optional | tta False | int8 False | guard 262s/29248 img, 5 tiers
+[run.py]    23s | diag {"python": "3.11.9", "cpu_count": 20, "threads": 20, "cgroup_cpu": "max 100000", "affinity": 20, "cpu": "QEMU Virtual CPU version 2.5+", "flags": ["avx2"], "mem_gb": 40.2}
+[run.py]    24s | first sample: keys ['attribute_names', 'image', 'image_path', 'index'] | image 'MEVID/images/0.jpg' | image_path '/app/input_data/images/MEVID/images/0.jpg'
+[run.py]    25s | new group 'MEVID' at image #0
+[run.py]    25s | optional models OFF after 128 images | main 7 + optional 3 ms/img | projected 327s with, 239s without
+[run.py]    46s | 2880 images | 15.8 ms/img avg | io 0.73 prep 0.04 model 6.81 ms/img | tier 0 | images per tier [2880, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 2880)]
+[run.py]    67s | 5760 images | 11.7 ms/img avg | io 0.74 prep 0.04 model 6.75 ms/img | tier 0 | images per tier [5760, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 5760)]
+[run.py]    89s | 8640 images | 10.3 ms/img avg | io 0.76 prep 0.04 model 6.74 ms/img | tier 0 | images per tier [8640, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 8640)]
+[run.py]   112s | 11520 images | 9.7 ms/img avg | io 0.79 prep 0.04 model 6.76 ms/img | tier 0 | images per tier [11520, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 11520)]
+[run.py]   134s | 14400 images | 9.3 ms/img avg | io 0.79 prep 0.04 model 6.78 ms/img | tier 0 | images per tier [14400, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 14400)]
+[run.py]   157s | 17280 images | 9.1 ms/img avg | io 0.79 prep 0.04 model 6.81 ms/img | tier 0 | images per tier [17280, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 17280)]
+[run.py]   180s | 20160 images | 8.9 ms/img avg | io 0.79 prep 0.04 model 6.84 ms/img | tier 0 | images per tier [20160, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 20160)]
+[run.py]   203s | 23040 images | 8.8 ms/img avg | io 0.79 prep 0.04 model 6.88 ms/img | tier 0 | images per tier [23040, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 23040)]
+[run.py]   226s | 25920 images | 8.7 ms/img avg | io 0.79 prep 0.04 model 6.91 ms/img | tier 0 | images per tier [25920, 0, 0, 0, 0] | with optional 128 | 1 groups, top [('MEVID', 25920)]
+[run.py]   229s | optional models ON after 26304 images | main 8 + optional 3 ms/img | projected 262s with, 253s without
+[run.py]   229s | tier 0 -> 1 (192x96) after 26304 images | 8 ms/img at tier-0 cost
+[run.py]   245s | new group 'Synth' at image #28095
+[run.py]   252s | 28800 images | 8.7 ms/img avg | io 0.80 prep 0.04 model 7.00 ms/img | tier 1 | images per tier [26304, 2496, 0, 0, 0] | with optional 2624 | 2 groups, top [('MEVID', 28095), ('Synth', 705)]
+[run.py]   256s | 29248 images | 8.7 ms/img avg | io 0.81 prep 0.04 model 7.02 ms/img | tier 1 | images per tier [26304, 2944, 0, 0, 0] | with optional 3072 | 2 groups, top [('MEVID', 28095), ('Synth', 1153)]

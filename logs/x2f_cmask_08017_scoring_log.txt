@@ -1,0 +1,27 @@
+# Codabench scoring log of the final ranked entry X2F-CMASK (test 0.8017, zip md5 e9bb5cdf6d567767d8d0a47791b4d299), NVIDIA A10 server.
+# Saved on 26 October 2026; Codabench is now offline, so this is the only copy. The [run.py] lines are verbatim.
+# Reading notes:
+#   - "int8 False" is the CPU dynamic-int8 flag (inference/x2f_cmask/run.py:112); on GPU the int8-stored weights are dequantised (run.py:66).
+#   - head = images 0..28094 (all MEVID), tail = images 28095..29247 (all Synth); "index!=pos 0": every image index equalled its position.
+#   - The time guard did not intervene: every head image ran at tier 0 (224x112); every tail image ran at tier 1 (192x96), the fixed tail
+#     resolution, with the two optional models and horizontal flip.
+#   - Last line: all 29,248 images done 266 s after the script started, 9.1 ms per image on average.
+[run.py] torch 2.4.1+cu121 | device cuda (NVIDIA A10) | cpu threads 20 | models dinov3_vith16p 224x112 w=0.24, dinov2_vitl14_reg 224x112 w=0.16, dinov3_vith16p 224x112 w=0.30 optional, radio_v4h 224x112 w=0.30 optional | tta False (tail True) | int8 False | guard 266s/29248 img, 5 tiers | split at image #28095 (tail tier 1, hard 280s)
+[run.py]    10s | diag {"python": "3.11.9", "cpu_count": 20, "threads": 20, "cgroup_cpu": "max 100000", "affinity": 20, "cpu": "QEMU Virtual CPU version 2.5+", "flags": ["avx2"], "mem_gb": 40.2}
+[run.py]    10s | first sample: keys ['attribute_names', 'image', 'image_path', 'index'] | image 'MEVID/images/0.jpg' | image_path '/app/input_data/images/MEVID/images/0.jpg'
+[run.py]    11s | new group 'MEVID' at image #0
+[run.py]    32s | 2880 images | 11.1 ms/img avg | io 0.82 prep 0.05 model 6.51 ms/img | tier 0 | images per tier [2880, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 2880)] | parts {'head': {'MEVID': 2880}} | index!=pos 0
+[run.py]    53s | 5760 images | 9.3 ms/img avg | io 0.84 prep 0.05 model 6.51 ms/img | tier 0 | images per tier [5760, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 5760)] | parts {'head': {'MEVID': 5760}} | index!=pos 0
+[run.py]    75s | 8640 images | 8.7 ms/img avg | io 0.83 prep 0.04 model 6.53 ms/img | tier 0 | images per tier [8640, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 8640)] | parts {'head': {'MEVID': 8640}} | index!=pos 0
+[run.py]    97s | 11520 images | 8.4 ms/img avg | io 0.82 prep 0.04 model 6.56 ms/img | tier 0 | images per tier [11520, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 11520)] | parts {'head': {'MEVID': 11520}} | index!=pos 0
+[run.py]   119s | 14400 images | 8.3 ms/img avg | io 0.81 prep 0.04 model 6.61 ms/img | tier 0 | images per tier [14400, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 14400)] | parts {'head': {'MEVID': 14400}} | index!=pos 0
+[run.py]   141s | 17280 images | 8.2 ms/img avg | io 0.80 prep 0.04 model 6.66 ms/img | tier 0 | images per tier [17280, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 17280)] | parts {'head': {'MEVID': 17280}} | index!=pos 0
+[run.py]   164s | 20160 images | 8.1 ms/img avg | io 0.80 prep 0.04 model 6.70 ms/img | tier 0 | images per tier [20160, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 20160)] | parts {'head': {'MEVID': 20160}} | index!=pos 0
+[run.py]   187s | 23040 images | 8.1 ms/img avg | io 0.79 prep 0.04 model 6.76 ms/img | tier 0 | images per tier [23040, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 23040)] | parts {'head': {'MEVID': 23040}} | index!=pos 0
+[run.py]   210s | 25920 images | 8.1 ms/img avg | io 0.79 prep 0.04 model 6.81 ms/img | tier 0 | images per tier [25920, 0, 0, 0, 0] | with optional 0 | 1 groups, top [('MEVID', 25920)] | parts {'head': {'MEVID': 25920}} | index!=pos 0
+[run.py]   230s | tail starts at image #28095 | index 28095 | image 'Synth/images/image_001_005.png' | group 'Synth'
+[run.py]   231s | optional models ON after 28095 images (tail part)
+[run.py]   231s | tier 0 -> 1 (192x96) after 28095 images | 10 ms/img at tier-0 cost
+[run.py]   231s | new group 'Synth' at image #28095
+[run.py]   251s | 28800 images | 8.7 ms/img avg | io 0.79 prep 0.04 model 7.46 ms/img | tier 1 | images per tier [28095, 705, 0, 0, 0] | with optional 705 | 2 groups, top [('MEVID', 28095), ('Synth', 705)] | parts {'head': {'MEVID': 28095}, 'tail': {'Synth': 705}} | index!=pos 0
+[run.py]   266s | 29248 images | 9.1 ms/img avg | io 0.79 prep 0.04 model 7.85 ms/img | tier 1 | images per tier [28095, 1153, 0, 0, 0] | with optional 1153 | 2 groups, top [('MEVID', 28095), ('Synth', 1153)] | parts {'head': {'MEVID': 28095}, 'tail': {'Synth': 1153}} | index!=pos 0
